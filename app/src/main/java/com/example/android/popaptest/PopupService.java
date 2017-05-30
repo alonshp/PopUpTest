@@ -1,19 +1,25 @@
 package com.example.android.popaptest;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v4.app.ActivityCompat;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import static android.content.Context.WINDOW_SERVICE;
 
@@ -39,8 +45,7 @@ public class PopupService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void showDialog(String aTitle)
-    {
+    private void showDialog(String aTitle) {
         PowerManager pm = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock mWakeLock = pm.newWakeLock((PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "YourServie");
         mWakeLock.acquire();
@@ -50,7 +55,7 @@ public class PopupService extends Service {
         mView = View.inflate(getApplicationContext(), R.layout.popup, null);
         mView.setTag(TAG);
 
-        TextView close = (TextView) mView.findViewById(R.id.dismiss);
+        Button close = (Button) mView.findViewById(R.id.dismiss);
         close.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -59,16 +64,38 @@ public class PopupService extends Service {
             }
         });
 
+        Button available = (Button) mView.findViewById(R.id.available);
+        available.setOnClickListener(new View.OnClickListener() {
 
-        final WindowManager.LayoutParams mLayoutParams = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER, Gravity.CENTER,
-                WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                        | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-                        | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                        | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON ,
-                PixelFormat.RGBA_8888);
+            @Override
+            public void onClick(View arg0) {
+                Intent callIntent = new Intent(Intent.ACTION_CALL);
+                callIntent.setData(Uri.parse("tel:" + Uri.encode("0543134348")));
+                callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try {
+                    startActivity(callIntent);
+                } catch (android.content.ActivityNotFoundException ex) {
+                }
+                hideDialog();
+            }
+        });
+
+
+        final WindowManager.LayoutParams mLayoutParams = new WindowManager.LayoutParams();
+
+        mLayoutParams.gravity = Gravity.CENTER;
+        mLayoutParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ERROR;
+        mLayoutParams.flags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+        mLayoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
+        mLayoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        mLayoutParams.alpha = 1.0f;
+        mLayoutParams.packageName = this.getPackageName();
+        mLayoutParams.buttonBrightness = 1f;
+        mLayoutParams.windowAnimations = android.R.style.Animation_Dialog;
 
         mView.setVisibility(View.VISIBLE);
         mWindowManager.addView(mView, mLayoutParams);
